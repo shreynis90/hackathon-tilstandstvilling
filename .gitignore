@@ -1,0 +1,27 @@
+# Secrets
+.env
+
+# Local data / point clouds
+data/
+*.las
+*.laz
+*.copc.laz
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Poetry
+.poetry/
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Tests / cache
+.pytest_cache/
+.ruff_cache/

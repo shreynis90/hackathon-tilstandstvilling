@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>TilstandsTvilling</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.css"
+    >
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        #map {
+            position: absolute;
+            inset: 0;
+        }
+
+        #panel {
+            position: absolute;
+
+            top: 20px;
+            right: 20px;
+
+            width: 340px;
+
+            padding: 22px;
+
+            color: white;
+
+            background:
+                rgba(
+                    18,
+                    24,
+                    32,
+                    0.95
+                );
+
+            border-radius: 14px;
+
+            box-shadow:
+                0 8px 30px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.35
+                );
+
+            backdrop-filter:
+                blur(10px);
+
+            z-index: 10;
+        }
+
+        h1 {
+            margin: 0;
+
+            font-size: 25px;
+        }
+
+        h2 {
+            margin:
+                4px
+                0
+                20px;
+
+            font-size: 13px;
+
+            font-weight: 500;
+
+            opacity: 0.55;
+        }
+
+        .section-title {
+            margin-top: 20px;
+            margin-bottom: 8px;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing:
+                0.08em;
+
+            opacity: 0.55;
+        }
+
+        .select-label {
+            display: block;
+
+            margin-top: 12px;
+            margin-bottom: 5px;
+
+            font-size: 12px;
+
+            opacity: 0.7;
+        }
+
+        select {
+            width: 100%;
+
+            padding:
+                10px
+                11px;
+
+            border: 1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.15
+                );
+
+            border-radius: 7px;
+
+            background:
+                #252d37;
+
+            color: white;
+
+            font-size: 14px;
+
+            outline: none;
+        }
+
+        select:disabled {
+            opacity: 0.4;
+        }
+
+        .row {
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            gap: 15px;
+
+            margin:
+                9px
+                0;
+
+            font-size: 14px;
+        }
+
+        .label {
+            opacity: 0.6;
+        }
+
+        .value {
+            text-align: right;
+
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+
+            margin-top: 15px;
+
+            padding:
+                7px
+                10px;
+
+            border-radius: 7px;
+
+            background:
+                rgba(
+                    67,
+                    181,
+                    129,
+                    0.15
+                );
+
+            border:
+                1px solid
+                rgba(
+                    67,
+                    181,
+                    129,
+                    0.4
+                );
+
+            font-size: 12px;
+        }
+
+        #status {
+            position: absolute;
+
+            left: 20px;
+            bottom: 20px;
+
+            padding:
+                10px
+                14px;
+
+            border-radius: 8px;
+
+            background:
+                rgba(
+                    18,
+                    24,
+                    32,
+                    0.9
+                );
+
+            color: white;
+
+            font-size: 13px;
+
+            z-index: 10;
+        }
+    </style>
+</head>
+
+
+<body>
+
+
+<div id="map"></div>
+
+
+<div id="panel">
+
+    <h1 id="asset-name">
+        Velg bru
+    </h1>
+
+    <h2>
+        TilstandsTvilling
+    </h2>
+
+
+    <!-- --------------------------------------------------
+         Selection
+    --------------------------------------------------- -->
+
+    <div class="section-title">
+        Velg objekt
+    </div>
+
+
+    <label
+        class="select-label"
+        for="bridge-select"
+    >
+        Bru
+    </label>
+
+    <select id="bridge-select">
+
+        <option value="">
+            Laster bruer...
+        </option>
+
+    </select>
+
+
+    <label
+        class="select-label"
+        for="capture-select"
+    >
+        Måling
+    </label>
+
+    <select
+        id="capture-select"
+        disabled
+    >
+
+        <option value="">
+            Velg bru først
+        </option>
+
+    </select>
+
+
+    <!-- --------------------------------------------------
+         Object metadata
+    --------------------------------------------------- -->
+
+    <div class="section-title">
+        Objekt
+    </div>
+
+
+    <div class="row">
+
+        <span class="label">
+            NVDB ID
+        </span>
+
+        <span
+            class="value"
+            id="asset-id"
+        >
+            -
+        </span>
+
+    </div>
+
+
+    <div class="row">
+
+        <span class="label">
+            Vegsystem
+        </span>
+
+        <span
+            class="value"
+            id="road"
+        >
+            -
+        </span>
+
+    </div>
+
+
+    <div class="row">
+
+        <span class="label">
+            Datafangst
+        </span>
+
+        <span
+            class="value"
+            id="capture-date"
+        >
+            -
+        </span>
+
+    </div>
+
+
+    <div class="row">
+
+        <span class="label">
+            Vedlikeholdsansvarlig
+        </span>
+
+        <span
+            class="value"
+            id="maintenance-owner"
+        >
+            -
+        </span>
+
+    </div>
+
+
+    <!-- --------------------------------------------------
+         Point cloud metadata
+    --------------------------------------------------- -->
+
+    <div class="section-title">
+        Punktsky
+    </div>
+
+
+    <div class="row">
+
+        <span class="label">
+            EPSG
+        </span>
+
+        <span
+            class="value"
+            id="epsg"
+        >
+            -
+        </span>
+
+    </div>
+
+
+    <div class="row">
+
+        <span class="label">
+            Punkter totalt
+        </span>
+
+        <span
+            class="value"
+            id="points-total"
+        >
+            -
+        </span>
+
+    </div>
+
+
+    <div class="row">
+
+        <span class="label">
+            Punkter vist
+        </span>
+
+        <span
+            class="value"
+            id="points-shown"
+        >
+            -
+        </span>
+
+    </div>
+
+
+    <div class="row">
+
+        <span class="label">
+            Filstørrelse
+        </span>
+
+        <span
+            class="value"
+            id="file-size"
+        >
+            -
+        </span>
+
+    </div>
+
+
+    <div class="badge">
+        Kilde: Saga
+    </div>
+
+</div>
+
+
+<div id="status">
+    Starter...
+</div>
+
+
+<script type="module">
+
+    import * as maplibregl from
+        "https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.mjs";
+
+
+    import {
+        MapLibreOverlay
+    } from
+        "https://esm.sh/@deck.gl/maplibre@9.4.0";
+
+
+    import {
+        PointCloudLayer
+    } from
+        "https://esm.sh/@deck.gl/layers@9.4.0";
+
+
+    // -----------------------------------------------------
+    // DOM
+    // -----------------------------------------------------
+
+    const bridgeSelect =
+        document.getElementById(
+            "bridge-select"
+        );
+
+
+    const captureSelect =
+        document.getElementById(
+            "capture-select"
+        );
+
+
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+
+    // -----------------------------------------------------
+    // Map
+    // -----------------------------------------------------
+
+    const map =
+        new maplibregl.Map({
+
+            container:
+                "map",
+
+            style:
+                "https://tiles.openfreemap.org/styles/liberty",
+
+            center: [
+                10.75,
+                59.91
+            ],
+
+            zoom:
+                5,
+
+            pitch:
+                45,
+
+            bearing:
+                0,
+
+            antialias:
+                true
+        });
+
+
+    map.addControl(
+        new maplibregl.NavigationControl(
+            {
+                visualizePitch:
+                    true
+            }
+        ),
+        "bottom-left"
+    );
+
+
+    const deckOverlay =
+        new MapLibreOverlay({
+
+            interleaved:
+                true,
+
+            layers: []
+        });
+
+
+    map.addControl(
+        deckOverlay
+    );
+
+
+    // -----------------------------------------------------
+    // Load bridges
+    // -----------------------------------------------------
+
+    async function loadBridges() {
+
+        status.textContent =
+            "Laster bruer...";
+
+
+        const response =
+            await fetch(
+                "/api/bridges"
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Kunne ikke laste bruer."
+            );
+
+        }
+
+
+        const bridges =
+            await response.json();
+
+
+        bridgeSelect.innerHTML =
+            `
+            <option value="">
+                Velg bru
+            </option>
+            `;
+
+
+        bridges.forEach(
+            bridge => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    bridge.bridge_id;
+
+
+                option.textContent =
+                    `${bridge.bridge_name} (${bridge.capture_count} målinger)`;
+
+
+                bridgeSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        status.textContent =
+            `${bridges.length} bruer tilgjengelig`;
+
+    }
+
+
+    // -----------------------------------------------------
+    // Load captures for bridge
+    // -----------------------------------------------------
+
+    async function loadCaptures(
+        bridgeId
+    ) {
+
+        captureSelect.disabled =
+            true;
+
+
+        captureSelect.innerHTML =
+            `
+            <option>
+                Laster målinger...
+            </option>
+            `;
+
+
+        status.textContent =
+            "Laster målinger...";
+
+
+        const response =
+            await fetch(
+                `/api/bridges/${bridgeId}/captures`
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Kunne ikke laste målinger."
+            );
+
+        }
+
+
+        const captures =
+            await response.json();
+
+
+        captureSelect.innerHTML =
+            `
+            <option value="">
+                Velg måling
+            </option>
+            `;
+
+
+        captures.forEach(
+            capture => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    capture.capture_id;
+
+
+                option.textContent =
+                    `${capture.capture_date} — ${capture.road_reference}`;
+
+
+                captureSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        captureSelect.disabled =
+            false;
+
+
+        status.textContent =
+            `${captures.length} målinger tilgjengelig`;
+
+    }
+
+
+    // -----------------------------------------------------
+    // Load capture metadata
+    // -----------------------------------------------------
+
+    async function loadCapture(
+        bridgeId,
+        captureId
+    ) {
+
+        status.textContent =
+            "Laster metadata...";
+
+
+        const metadataResponse =
+            await fetch(
+                `/api/bridges/${bridgeId}/captures/${captureId}`
+            );
+
+
+        if (!metadataResponse.ok) {
+
+            throw new Error(
+                "Kunne ikke laste metadata."
+            );
+
+        }
+
+
+        const metadata =
+            await metadataResponse.json();
+
+
+        // -------------------------------------------------
+        // Update panel
+        // -------------------------------------------------
+
+        document.getElementById(
+            "asset-name"
+        ).textContent =
+            metadata.asset_name;
+
+
+        document.getElementById(
+            "asset-id"
+        ).textContent =
+            metadata.asset_id;
+
+
+        document.getElementById(
+            "road"
+        ).textContent =
+            metadata.road_reference;
+
+
+        document.getElementById(
+            "capture-date"
+        ).textContent =
+            metadata.capture_date;
+
+
+        document.getElementById(
+            "maintenance-owner"
+        ).textContent =
+            metadata.maintenance_owner
+            || "-";
+
+
+        document.getElementById(
+            "epsg"
+        ).textContent =
+            metadata.epsg;
+
+
+        document.getElementById(
+            "points-total"
+        ).textContent =
+            Number(
+                metadata.total_points
+            ).toLocaleString(
+                "nb-NO"
+            );
+
+
+        document.getElementById(
+            "points-shown"
+        ).textContent =
+            Number(
+                metadata.displayed_points
+            ).toLocaleString(
+                "nb-NO"
+            );
+
+
+        document.getElementById(
+            "file-size"
+        ).textContent =
+            `${metadata.file_size_mb} MB`;
+
+
+        // -------------------------------------------------
+        // Move map to asset
+        // -------------------------------------------------
+
+        map.flyTo({
+
+            center: [
+                metadata.center.longitude,
+                metadata.center.latitude
+            ],
+
+            zoom:
+                18,
+
+            pitch:
+                68,
+
+            bearing:
+                -20,
+
+            duration:
+                1600
+
+        });
+
+
+        // -------------------------------------------------
+        // Load points
+        // -------------------------------------------------
+
+        status.textContent =
+            "Laster punktsky...";
+
+
+        const pointsResponse =
+            await fetch(
+                `/api/bridges/${bridgeId}/captures/${captureId}/points`
+            );
+
+
+        if (!pointsResponse.ok) {
+
+            throw new Error(
+                "Kunne ikke laste punktsky."
+            );
+
+        }
+
+
+        const pointPayload =
+            await pointsResponse.json();
+
+
+        const points =
+            pointPayload.points;
+
+
+        // -------------------------------------------------
+        // Replace point-cloud layer
+        // -------------------------------------------------
+
+        const pointCloudLayer =
+            new PointCloudLayer({
+
+                id:
+                    "bridge-point-cloud",
+
+                data:
+                    points,
+
+                getPosition:
+                    d =>
+                        d.position,
+
+                getColor:
+                    d =>
+                        d.color,
+
+                pointSize:
+                    3,
+
+                sizeUnits:
+                    "pixels",
+
+                pickable:
+                    true,
+
+                opacity:
+                    1
+
+            });
+
+
+        deckOverlay.setProps({
+
+            layers: [
+                pointCloudLayer
+            ]
+
+        });
+
+
+        status.textContent =
+            `${points.length.toLocaleString("nb-NO")} punkter vist`;
+
+    }
+
+
+    // -----------------------------------------------------
+    // Bridge dropdown
+    // -----------------------------------------------------
+
+    bridgeSelect.addEventListener(
+        "change",
+        async event => {
+
+            const bridgeId =
+                event.target.value;
+
+
+            deckOverlay.setProps({
+
+                layers: []
+
+            });
+
+
+            if (!bridgeId) {
+
+                captureSelect.disabled =
+                    true;
+
+
+                captureSelect.innerHTML =
+                    `
+                    <option>
+                        Velg bru først
+                    </option>
+                    `;
+
+
+                return;
+
+            }
+
+
+            try {
+
+                await loadCaptures(
+                    bridgeId
+                );
+
+            } catch (error) {
+
+                console.error(
+                    error
+                );
+
+
+                status.textContent =
+                    `FEIL: ${error.message}`;
+
+            }
+
+        }
+    );
+
+
+    // -----------------------------------------------------
+    // Capture dropdown
+    // -----------------------------------------------------
+
+    captureSelect.addEventListener(
+        "change",
+        async event => {
+
+            const bridgeId =
+                bridgeSelect.value;
+
+
+            const captureId =
+                event.target.value;
+
+
+            if (
+                !bridgeId
+                ||
+                captureId === ""
+            ) {
+
+                return;
+
+            }
+
+
+            try {
+
+                await loadCapture(
+                    bridgeId,
+                    captureId
+                );
+
+            } catch (error) {
+
+                console.error(
+                    error
+                );
+
+
+                status.textContent =
+                    `FEIL: ${error.message}`;
+
+            }
+
+        }
+    );
+
+
+    // -----------------------------------------------------
+    // Start
+    // -----------------------------------------------------
+
+    try {
+
+        await loadBridges();
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        status.textContent =
+            `FEIL: ${error.message}`;
+
+    }
+
+</script>
+
+
+</body>
+</html>
